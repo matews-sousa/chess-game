@@ -1,45 +1,36 @@
 import { Chess, Square } from "chess.js";
 import Chessboard from "chessboardjsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useParams } from "react-router-dom";
+import AuthProvider, { useAuth } from "./contexts/AuthContext";
+import { GameProvider } from "./contexts/GameContext";
+import Game from "./pages/Game";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
 
-const chess = new Chess();
+const ProtectedRoute = () => {
+  const { currentUser } = useAuth();
+
+  return !currentUser ? <Navigate to="/login" /> : <Outlet />;
+};
 
 function App() {
-  const [gameState, setGameState] = useState({
-    position: chess.fen(),
-    pgn: "",
-    isGameOver: chess.isGameOver(),
-    checkmate: chess.isCheckmate(),
-    stalemate: chess.isStalemate(),
-    draw: chess.isDraw(),
-  });
-
-  const handleOnDrop = ({ sourceSquare, targetSquare }: { sourceSquare: Square; targetSquare: Square }) => {
-    if (sourceSquare === targetSquare) return;
-    try {
-      const move = chess.move({
-        from: sourceSquare,
-        to: targetSquare,
-        promotion: "n",
-      });
-      setGameState((prev) => ({
-        ...prev,
-        pgn: chess.pgn(),
-        position: chess.fen(),
-        isGameOver: chess.isGameOver(),
-        checkmate: chess.isCheckmate(),
-        stalemate: chess.isStalemate(),
-        draw: chess.isDraw(),
-      }));
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   return (
-    <div className="h-screen w-screen flex items-center justify-center">
-      <Chessboard position={gameState.position} draggable={!gameState.isGameOver} onDrop={handleOnDrop} />
-    </div>
+    <AuthProvider>
+      <GameProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/sign-up" element={<SignUp />} />
+            <Route path="/" element={<ProtectedRoute />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/:uuid" element={<Game />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </GameProvider>
+    </AuthProvider>
   );
 }
 
