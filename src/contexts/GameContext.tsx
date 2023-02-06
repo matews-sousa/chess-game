@@ -38,9 +38,8 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
       .channel("postgresChangesChannel")
       .on(
         "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "games", filter: `uuid:eq.${uuid}` },
+        { event: "UPDATE", schema: "public", table: "games", filter: `uuid=eq.${uuid}` },
         (payload) => {
-          console.log(payload);
           setGameData(payload.new as Game);
         },
       )
@@ -49,17 +48,19 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     const channel = supabase.channel(uuid);
 
     channel
-      .on("presence", { event: "sync" }, async () => {})
+      .on("presence", { event: "join" }, async () => {})
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
-          await channel.send({
-            type: "broadcast",
-            event: "join-game",
-            payload: {
-              id: currentUser?.id,
-              color: whitePlayer ? "black" : "white",
-            },
-          });
+          if (gameData?.players.length === 1 && gameData?.players[0].id !== currentUser?.id) {
+            await channel.send({
+              type: "broadcast",
+              event: "join-game",
+              payload: {
+                id: currentUser.id,
+                color: gameData?.players[0].color === "white" ? "black" : "white",
+              },
+            });
+          }
         }
       });
 
@@ -68,18 +69,13 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) return;
 
       if (data.players.length === 1) {
-        const { data: udpatedData } = await supabase
+        await supabase
           .from("games")
           .update({ players: [data.players[0], payload.payload] })
           .eq("uuid", uuid)
           .select()
           .single();
-        setGameData(udpatedData as Game);
-
-        return;
       }
-
-      setGameData(data as Game);
     });
 
     setChannel(channel);
