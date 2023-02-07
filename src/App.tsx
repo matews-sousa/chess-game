@@ -1,6 +1,3 @@
-import { Chess, Square } from "chess.js";
-import Chessboard from "chessboardjsx";
-import { useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useParams } from "react-router-dom";
 import AuthProvider, { useAuth } from "./contexts/AuthContext";
 import { GameProvider } from "./contexts/GameContext";
