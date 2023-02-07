@@ -1,5 +1,6 @@
 import React from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 
@@ -12,6 +13,7 @@ const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
 const Home = () => {
   const navigate = useNavigate();
   const { currentUser, signOut } = useAuth();
+  console.log(currentUser);
   const [gameId, setGameId] = React.useState<string | null>(null);
 
   const handleSelectColor = async (color: string) => {
@@ -41,12 +43,12 @@ const Home = () => {
     }
     // check if the game is full
     if (data.players.length === 2) {
+      // check if the user is already in the game, if it is, navigate to the game page
+      if (data.players.find((player: Player) => player.id === currentUser?.id)) {
+        navigate(`/${gameId}`);
+        return;
+      }
       alert("Game is full");
-      return;
-    }
-    // check if the user is already in the game
-    if (data.players.find((player) => player.id === currentUser?.id)) {
-      alert("You are already in the game");
       return;
     }
     // add the user to the game
@@ -73,22 +75,55 @@ const Home = () => {
   }
 
   return (
-    <div>
-      <h1>Home</h1>
-      <p>Welcome {currentUser?.email}</p>
-      <button onClick={signOut}>Sign Out</button>
-      <div className="flex gap-2">
-        <button onClick={() => handleSelectColor("white")}>White</button>
-        <button onClick={() => handleSelectColor("black")}>Black</button>
-        <button onClick={() => handleSelectColor(getRandomColor())}>Random</button>
-      </div>
+    <Layout>
+      <h2 className="text-4xl font-bold mb-10">
+        Welcome, <span className="underline">{currentUser?.user_metadata.firstName || currentUser?.email}</span>
+      </h2>
 
-      <div className="mt-10">
-        <h1>Join Game</h1>
-        <input type="text" placeholder="Enter game ID" onChange={(e) => setGameId(e.target.value)} />
-        <button onClick={handleJoinGame}>Join</button>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="">
+          <h3 className="text-3xl font-semibold mb-6">Create Game</h3>
+          <div className="grid grid-cols-3 gap-4">
+            <button
+              onClick={() => handleSelectColor("white")}
+              className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex items-center justify-center"
+            >
+              White
+            </button>
+            <button
+              onClick={() => handleSelectColor("black")}
+              className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex items-center justify-center"
+            >
+              Black
+            </button>
+            <button
+              onClick={() => handleSelectColor(getRandomColor())}
+              className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex items-center justify-center"
+            >
+              Random
+            </button>
+          </div>
+        </div>
+
+        <div className="">
+          <h3 className="text-3xl font-semibold mb-6">Join Game</h3>
+          <div className="flex flex-col">
+            <input
+              type="text"
+              placeholder="Enter game ID"
+              className="border border-gray-400 rounded-md px-2 py-3"
+              onChange={(e) => setGameId(e.target.value)}
+            />
+            <button
+              onClick={handleJoinGame}
+              className="mt-2 bg-green-500 hover:bg-green-600 rounded-md px-2 py-3 text-white font-semibold disabled:opacity-75 disabled:cursor-default"
+            >
+              Join
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
+    </Layout>
   );
 };
 

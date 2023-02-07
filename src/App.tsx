@@ -7,9 +7,9 @@ import Login from "./pages/Login";
 import SignUp from "./pages/SignUp";
 
 const ProtectedRoute = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, loading } = useAuth();
 
-  return !currentUser ? <Navigate to="/login" /> : <Outlet />;
+  return !currentUser && !loading ? <Navigate to="/login" /> : <Outlet />;
 };
 
 function App() {

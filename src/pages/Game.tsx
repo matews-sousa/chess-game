@@ -2,9 +2,13 @@ import { Chess, Square } from "chess.js";
 import Chessboard from "chessboardjsx";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
 import { useGame } from "../contexts/GameContext";
 import { supabase } from "../lib/supabase";
+import { MdContentCopy } from "react-icons/md";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // give chess initial position in fen notation
 const initialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -15,9 +19,24 @@ const Game = () => {
   const { uuid } = useParams<{ uuid: string }>();
   const { currentUser } = useAuth();
   const { gameData, channel, whitePlayer, blackPlayer, setUuid } = useGame();
-  const [position, setPosition] = useState<string>("start");
+  const [position, setPosition] = useState<string>(initialFEN);
   const [isGameOver, setIsGameOver] = useState(chess?.isGameOver());
   const playerColor = gameData?.players.find((player) => player.id === currentUser?.id)?.color as "white" | "black";
+
+  const copyToClipboard = () => {
+    if (!uuid) return;
+    navigator.clipboard.writeText(uuid);
+    toast.success("Copied to clipboard", {
+      position: "top-center",
+      autoClose: 5000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
+  };
 
   const handleOnDrop = async ({ sourceSquare, targetSquare }: { sourceSquare: Square; targetSquare: Square }) => {
     if (sourceSquare === targetSquare || !channel) return;
@@ -72,9 +91,42 @@ const Game = () => {
 
   if (!gameData) return null;
 
+  if (gameData.players.length === 1 && gameData.creator_id === currentUser?.id && uuid) {
+    return (
+      <Layout>
+        <ToastContainer />
+        <div className="flex flex-col items-center justify-center h-[65vh]">
+          <div className="flex flex-col items-center justify-between mb-10">
+            <p className="font-medium mb-2">Copy the ID and share with a friend to join the game.</p>
+            <div className="flex items-center justify-between gap-6 bg-gray-100 px-4 py-2 rounded-md">
+              <p className="cursor-pointer" onClick={copyToClipboard}>
+                {uuid}
+              </p>
+              <button className="p-2 rounded-md bg-gray-200 hover:bg-gray-300" onClick={copyToClipboard}>
+                <MdContentCopy />
+              </button>
+            </div>
+          </div>
+          <h1 className="text-2xl font-bold">Waiting for another player...</h1>
+          {gameData.creator_id === currentUser?.id && (
+            <button
+              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
+              onClick={async () => {
+                await supabase.from("games").delete().eq("uuid", uuid);
+                navigate("/");
+              }}
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <div className="h-screen w-screen flex items-center justify-center">
-      {gameData && gameData.players.length === 2 ? (
+      {chess && position && gameData && gameData.players.length === 2 && (
         <div>
           {playerColor === "white" ? (
             <div className="flex flex-col items-center justify-center">
@@ -100,21 +152,6 @@ const Game = () => {
             <div className="flex flex-col items-center justify-center">
               <h1 className="text-2xl font-bold">{blackPlayer?.id}</h1>
             </div>
-          )}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center">
-          <h1 className="text-2xl font-bold">Waiting for another player...</h1>
-          {gameData.creator_id === currentUser?.id && (
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
-              onClick={async () => {
-                await supabase.from("games").delete().eq("uuid", uuid);
-                navigate("/");
-              }}
-            >
-              Cancel
-            </button>
           )}
         </div>
       )}

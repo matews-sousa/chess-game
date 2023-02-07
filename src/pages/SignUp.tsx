@@ -1,15 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 const SignUp = () => {
-  const [email, setEmail] = React.useState("");
-  const [password, setPassword] = React.useState("");
+  const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [password, setPassword] = useState("");
   const { currentUser, signUp } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    await signUp(email, password);
+    setIsSubmitting(true);
+    if (!email || !password || !firstName) return;
+
+    await signUp(email, password, firstName);
+    setIsSubmitting(false);
   };
 
   if (currentUser) {
@@ -31,6 +37,17 @@ const SignUp = () => {
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
+        <div className="flex flex-col space-y-2">
+          <label htmlFor="firstName">Name</label>
+          <input
+            type="text"
+            name="fistName"
+            id="firstName"
+            className="border border-gray-400 rounded-md px-2 py-3"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+        </div>
 
         <div className="flex flex-col space-y-2">
           <label htmlFor="password">Password</label>
@@ -45,7 +62,8 @@ const SignUp = () => {
         </div>
         <button
           type="submit"
-          className="mt-2 bg-green-500 hover:bg-green-600 rounded-md px-2 py-3 text-white font-semibold"
+          className="mt-2 bg-green-500 hover:bg-green-600 rounded-md px-2 py-3 text-white font-semibold disabled:opacity-75 disabled:cursor-default"
+          disabled={isSubmitting}
         >
           Sign Up
         </button>

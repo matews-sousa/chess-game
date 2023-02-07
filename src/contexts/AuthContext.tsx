@@ -4,7 +4,8 @@ import { supabase } from "../lib/supabase";
 
 interface AuthContextProps {
   currentUser: User | null;
-  signUp: (email: string, password: string) => Promise<void>;
+  loading: boolean;
+  signUp: (email: string, password: string, firstName: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -15,10 +16,15 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const signUp = async (email: string, password: string) => {
+  const signUp = async (email: string, password: string, firstName: string) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          firstName,
+        },
+      },
     });
     console.log(data, error);
   };
@@ -43,16 +49,18 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         data: { user },
       } = userRes;
       setCurrentUser(user ?? null);
+      setLoading(false);
     });
 
     supabase.auth.onAuthStateChange((event, session) => {
       setCurrentUser(session?.user ?? null);
+      setLoading(false);
     });
-    setLoading(false);
   }, []);
 
   const value = {
     currentUser,
+    loading,
     signUp,
     signIn,
     signOut,
