@@ -9,6 +9,7 @@ import { supabase } from "../lib/supabase";
 import { MdContentCopy } from "react-icons/md";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import PromotionList from "../components/PromotionList";
 
 // give chess initial position in fen notation
 const initialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -21,6 +22,8 @@ const Game = () => {
   const { gameData, channel, whitePlayer, blackPlayer, setUuid } = useGame();
   const [position, setPosition] = useState<string>(initialFEN);
   const [isGameOver, setIsGameOver] = useState(chess?.isGameOver());
+  const [nextMoveIsPromotion, setNextMoveIsPromotion] = useState(false);
+  const [promotionFromTo, setPromotionFromTo] = useState<{ from: Square; to: Square } | null>(null);
   const playerColor = gameData?.players.find((player) => player.id === currentUser?.id)?.color as "white" | "black";
 
   const copyToClipboard = () => {
@@ -40,11 +43,19 @@ const Game = () => {
 
   const handleOnDrop = async ({ sourceSquare, targetSquare }: { sourceSquare: Square; targetSquare: Square }) => {
     if (sourceSquare === targetSquare || !channel) return;
+
+    // if the next move is a promotion, we need to wait for the user to choose a piece
+    if ((targetSquare[1] === "8" || targetSquare[1] === "1") && chess.get(sourceSquare)?.type === "p") {
+      setNextMoveIsPromotion(true);
+      setPromotionFromTo({ from: sourceSquare, to: targetSquare });
+      return;
+    }
+
+    // if the next move is not a promotion, we can make the move
     try {
       const move = chess.move({
         from: sourceSquare,
         to: targetSquare,
-        promotion: "n",
       });
       if (move === null) return;
       setPosition(chess.fen());
@@ -64,6 +75,37 @@ const Game = () => {
     }
   };
 
+  const handleChoosePromotion = async (promotionValue: "b" | "n" | "r" | "q") => {
+    if (!channel || !promotionFromTo) return;
+
+    try {
+      const move = chess.move({
+        from: promotionFromTo.from,
+        to: promotionFromTo.to,
+        promotion: promotionValue,
+      });
+      if (move === null) return;
+      setPosition(chess.fen());
+      setIsGameOver(chess.isGameOver());
+      await channel.send({
+        type: "broadcast",
+        event: "make-move",
+        payload: {
+          move: {
+            from: promotionFromTo.from,
+            to: promotionFromTo.to,
+            promotion: promotionValue,
+          },
+        },
+      });
+      setNextMoveIsPromotion(false);
+      setPromotionFromTo(null);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // allow to move only if the player is owner of the piece (playerColor === pieceColor)
   const handleAllowDrag = ({ piece }: { piece: string }) => piece[0] === playerColor[0];
 
   useEffect(() => {
@@ -137,13 +179,16 @@ const Game = () => {
               <h1 className="text-2xl font-bold">{whitePlayer?.name}</h1>
             </div>
           )}
-          <Chessboard
-            allowDrag={handleAllowDrag}
-            position={position}
-            draggable={!isGameOver}
-            onDrop={handleOnDrop}
-            orientation={playerColor}
-          />
+          <div className="relative">
+            {nextMoveIsPromotion && <PromotionList handleChoosePromotion={handleChoosePromotion} />}
+            <Chessboard
+              allowDrag={handleAllowDrag}
+              position={position}
+              draggable={!isGameOver}
+              onDrop={handleOnDrop}
+              orientation={playerColor}
+            />
+          </div>
           {playerColor === "white" ? (
             <div className="flex flex-col items-center">
               <h1 className="text-2xl font-bold">{whitePlayer?.name}</h1>
