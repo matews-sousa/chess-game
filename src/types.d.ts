@@ -1,6 +1,7 @@
 type Player = {
   id: string;
   color: "white" | "black";
+  name: string;
 };
 
 type Game = {

@@ -125,16 +125,16 @@ const Game = () => {
   }
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center">
+    <Layout>
       {chess && position && gameData && gameData.players.length === 2 && (
-        <div>
+        <div className="flex flex-col items-start">
           {playerColor === "white" ? (
-            <div className="flex flex-col items-center justify-center">
-              <h1 className="text-2xl font-bold">{blackPlayer?.id}</h1>
+            <div className="flex flex-col items-center">
+              <h1 className="text-2xl font-bold">{blackPlayer?.name}</h1>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center">
-              <h1 className="text-2xl font-bold">{whitePlayer?.id}</h1>
+            <div className="flex flex-col items-center">
+              <h1 className="text-2xl font-bold">{whitePlayer?.name}</h1>
             </div>
           )}
           <Chessboard
@@ -145,17 +145,17 @@ const Game = () => {
             orientation={playerColor}
           />
           {playerColor === "white" ? (
-            <div className="flex flex-col items-center justify-center">
-              <h1 className="text-2xl font-bold">{whitePlayer?.id}</h1>
+            <div className="flex flex-col items-center">
+              <h1 className="text-2xl font-bold">{whitePlayer?.name}</h1>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center">
-              <h1 className="text-2xl font-bold">{blackPlayer?.id}</h1>
+            <div className="flex flex-col items-center">
+              <h1 className="text-2xl font-bold">{blackPlayer?.name}</h1>
             </div>
           )}
         </div>
       )}
-    </div>
+    </Layout>
   );
 };
 

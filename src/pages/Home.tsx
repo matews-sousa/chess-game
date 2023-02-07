@@ -25,6 +25,7 @@ const Home = () => {
           {
             id: currentUser?.id,
             color,
+            name: currentUser?.user_metadata.firstName || currentUser?.email,
           },
         ],
       })
@@ -60,6 +61,7 @@ const Home = () => {
           {
             id: currentUser?.id,
             color: data.players[0].color === "white" ? "black" : "white",
+            name: currentUser?.user_metadata.firstName || currentUser?.email,
           },
         ],
       })
