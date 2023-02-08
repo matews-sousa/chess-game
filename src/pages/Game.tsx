@@ -21,12 +21,17 @@ const Game = () => {
   const { uuid } = useParams<{ uuid: string }>();
   const { currentUser } = useAuth();
   const { gameData, channel, whitePlayer, blackPlayer, setUuid } = useGame();
+
+  const [messageText, setMessageText] = useState<string>("");
+  const [messages, setMessages] = useState<Message[]>([]);
+
   const [position, setPosition] = useState<string>(initialFEN);
   const [isGameOver, setIsGameOver] = useState(false);
   const [winner, setWinner] = useState<"white" | "black" | null>(null);
   const [typeOfEnd, setTypeOfEnd] = useState<EndOfGame>(null);
   const [nextMoveIsPromotion, setNextMoveIsPromotion] = useState(false);
   const [promotionFromTo, setPromotionFromTo] = useState<{ from: Square; to: Square } | null>(null);
+
   const playerColor = gameData?.players.find((player) => player.id === currentUser?.id)?.color as "white" | "black";
 
   const copyToClipboard = () => {
@@ -121,9 +126,30 @@ const Game = () => {
   // allow to move only if the player is owner of the piece (playerColor === pieceColor)
   const handleAllowDrag = ({ piece }: { piece: string }) => piece[0] === playerColor[0];
 
+  const handleSendMessage = async (message: string) => {
+    if (!uuid || !currentUser) return;
+    const { error } = await supabase.from("messages").insert({
+      game_id: uuid,
+      player_id: currentUser.id,
+      from: currentUser.user_metadata.firstName || currentUser.email,
+      text: message,
+    });
+    if (error) console.log(error);
+  };
+
   useEffect(() => {
     if (!uuid || !currentUser) return;
     setUuid(uuid);
+    supabase
+      .channel("postgresChangesChannel")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "messages", filter: `game_id=eq.${uuid}` },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new as Message]);
+        },
+      )
+      .subscribe();
   }, [uuid]);
 
   useEffect(() => {
@@ -195,51 +221,86 @@ const Game = () => {
   return (
     <Layout>
       {chess && position && gameData && gameData.players.length === 2 && (
-        <div className="flex flex-col items-start">
-          {playerColor === "white" ? (
-            <div className="flex flex-col items-center">
-              <h1 className="text-2xl font-bold">{blackPlayer?.name}</h1>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center">
-              <h1 className="text-2xl font-bold">{whitePlayer?.name}</h1>
-            </div>
-          )}
-          <div className="relative">
-            {nextMoveIsPromotion && <PromotionList handleChoosePromotion={handleChoosePromotion} />}
-            <Chessboard
-              allowDrag={handleAllowDrag}
-              position={position}
-              draggable={!isGameOver}
-              onDrop={handleOnDrop}
-              orientation={playerColor}
-            />
-            {isGameOver && (
-              <div className="absolute inset-0 bg-black bg-opacity-75 z-50 flex flex-col items-center justify-center">
-                <div className="bg-white p-6 rounded-md flex flex-col items-center justify-center">
-                  <h1 className="text-2xl font-bold mb-4">{winner === playerColor ? "You won!" : "You lost!"} </h1>
-                  <p className="mb-4 font-bold">{typeOfEnd?.toUpperCase()}</p>
-                  <button
-                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                    onClick={async () => {
-                      navigate("/");
-                    }}
-                  >
-                    Back to home
-                  </button>
+        <div className="grid grid-cols-1 lg:grid-cols-2">
+          <div className="flex flex-col items-start">
+            {playerColor === "white" ? (
+              <div className="flex flex-col items-center">
+                <h1 className="text-2xl font-bold">{blackPlayer?.name}</h1>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <h1 className="text-2xl font-bold">{whitePlayer?.name}</h1>
+              </div>
+            )}
+            <div className="relative">
+              {nextMoveIsPromotion && <PromotionList handleChoosePromotion={handleChoosePromotion} />}
+              <Chessboard
+                allowDrag={handleAllowDrag}
+                position={position}
+                draggable={!isGameOver}
+                onDrop={handleOnDrop}
+                orientation={playerColor}
+              />
+              {isGameOver && (
+                <div className="absolute inset-0 bg-black bg-opacity-75 z-50 flex flex-col items-center justify-center">
+                  <div className="bg-white p-6 rounded-md flex flex-col items-center justify-center">
+                    <h1 className="text-2xl font-bold mb-4">{winner === playerColor ? "You won!" : "You lost!"} </h1>
+                    <p className="mb-4 font-bold">{typeOfEnd?.toUpperCase()}</p>
+                    <button
+                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                      onClick={async () => {
+                        navigate("/");
+                      }}
+                    >
+                      Back to home
+                    </button>
+                  </div>
                 </div>
+              )}
+            </div>
+            {playerColor === "white" ? (
+              <div className="flex flex-col items-center">
+                <h1 className="text-2xl font-bold">{whitePlayer?.name}</h1>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <h1 className="text-2xl font-bold">{blackPlayer?.name}</h1>
               </div>
             )}
           </div>
-          {playerColor === "white" ? (
-            <div className="flex flex-col items-center">
-              <h1 className="text-2xl font-bold">{whitePlayer?.name}</h1>
+          <div className="flex flex-col justify-between">
+            <div className="flex flex-col space-y-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex flex-col items-start p-2 bg-gray-200 rounded-md max-w-xs w-full ${
+                    message.player_id === currentUser?.id ? "self-end" : "self-start"
+                  }`}
+                >
+                  <p className="font-bold">{message.player_id === currentUser?.id ? "You" : message.from}</p>
+                  <p>{message.text}</p>
+                </div>
+              ))}
             </div>
-          ) : (
-            <div className="flex flex-col items-center">
-              <h1 className="text-2xl font-bold">{blackPlayer?.name}</h1>
-            </div>
-          )}
+            <form
+              className="flex"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSendMessage(messageText);
+                setMessageText("");
+              }}
+            >
+              <input
+                className="flex-1 px-2 py-3 bg-gray-200 rounded-l-md"
+                type="text"
+                onChange={(e) => setMessageText(e.target.value)}
+                value={messageText}
+              />
+              <button type="submit" className="px-2 py-3 bg-blue-400 rounded-r-md font-semibold text-white">
+                Send
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </Layout>

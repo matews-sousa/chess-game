@@ -25,3 +25,12 @@ type Game = {
   winner?: "white" | "black" | null;
   endOfGame?: EndOfGame;
 };
+
+type Message = {
+  id: string;
+  created_at: Date;
+  game_id: string;
+  player_id: string;
+  from: string;
+  text: string;
+};
