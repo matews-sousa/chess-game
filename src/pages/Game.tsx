@@ -263,7 +263,9 @@ const Game = () => {
               </div>
             )}
             <div className="relative">
-              {nextMoveIsPromotion && <PromotionList handleChoosePromotion={handleChoosePromotion} />}
+              {nextMoveIsPromotion && (
+                <PromotionList handleChoosePromotion={handleChoosePromotion} playerColor={playerColor} />
+              )}
               <Chessboard
                 allowDrag={handleAllowDrag}
                 position={position}

@@ -80,7 +80,6 @@ const Home = () => {
         game.players.find((player: Player) => player.id === currentUser?.id),
       );
       setMyGames(myGames as Game[] | []);
-      console.log(myGames);
     };
     fetchGames();
   }, []);
@@ -91,32 +90,38 @@ const Home = () => {
         Welcome, <span className="underline">{currentUser?.user_metadata.firstName || currentUser?.email}</span>
       </h2>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="col-span-1">
           <h3 className="text-3xl font-semibold mb-6">Create Game</h3>
           <div className="grid grid-cols-3 gap-4">
             <button
               onClick={() => handleSelectColor("white")}
-              className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex items-center justify-center"
+              className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex flex-col items-center justify-center"
             >
-              White
+              <img src="/w_k.png" alt="White King piece" />
+              <span>White</span>
             </button>
             <button
               onClick={() => handleSelectColor("black")}
-              className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex items-center justify-center"
+              className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex flex-col items-center justify-center"
             >
-              Black
+              <img src="/b_k.png" alt="Black King piece" />
+              <span>Black</span>
             </button>
             <button
               onClick={() => handleSelectColor(getRandomColor())}
-              className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex items-center justify-center"
+              className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex flex-col items-center justify-center"
             >
-              Random
+              <div className="flex gap-2">
+                <img src="/w_k.png" alt="White King piece" />
+                <img src="/b_k.png" alt="Black King piece" />
+              </div>
+              <span>Random</span>
             </button>
           </div>
         </div>
 
-        <div className="">
+        <div className="col-span-1">
           <h3 className="text-3xl font-semibold mb-6">Join Game</h3>
           <div className="flex flex-col">
             <input
