@@ -127,29 +127,27 @@ const Game = () => {
   const handleAllowDrag = ({ piece }: { piece: string }) => piece[0] === playerColor[0];
 
   const handleSendMessage = async (message: string) => {
-    if (!uuid || !currentUser) return;
-    const { error } = await supabase.from("messages").insert({
+    if (!uuid || !currentUser || !channel || !message) return;
+    const newMessage = {
       game_id: uuid,
       player_id: currentUser.id,
       from: currentUser.user_metadata.firstName || currentUser.email,
       text: message,
+    } as Message;
+    await channel.send({
+      type: "broadcast",
+      event: "send-message",
+      payload: {
+        message: newMessage,
+      },
     });
-    if (error) console.log(error);
+    setMessageText("");
+    setMessages((prev) => [...prev, newMessage]);
   };
 
   useEffect(() => {
     if (!uuid || !currentUser) return;
     setUuid(uuid);
-    supabase
-      .channel("postgresChangesChannel")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "messages", filter: `game_id=eq.${uuid}` },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
-        },
-      )
-      .subscribe();
   }, [uuid]);
 
   useEffect(() => {
@@ -172,6 +170,11 @@ const Game = () => {
         .eq("uuid", uuid)
         .select()
         .single();
+    });
+
+    channel.on("broadcast", { event: "send-message" }, (payload) => {
+      const { message } = payload.payload;
+      setMessages((prev) => [...prev, message as Message]);
     });
   }, [channel]);
 
@@ -284,10 +287,9 @@ const Game = () => {
             </div>
             <form
               className="flex"
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
                 handleSendMessage(messageText);
-                setMessageText("");
               }}
             >
               <input
