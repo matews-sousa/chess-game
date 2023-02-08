@@ -1,5 +1,6 @@
-import React from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import GamesTable from "../components/GamesTable";
 import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
@@ -13,9 +14,10 @@ const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
 const Home = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const [gameId, setGameId] = React.useState<string | null>(null);
+  const [gameId, setGameId] = useState<string | null>(null);
+  const [myGames, setMyGames] = useState<Game[]>([]);
 
-  const handleSelectColor = async (color: string) => {
+  const handleSelectColor = async (color: Color) => {
     const { data, error } = await supabase
       .from("games")
       .insert({
@@ -71,9 +73,17 @@ const Home = () => {
     navigate(`/${updatedGame.uuid}`);
   };
 
-  if (!currentUser) {
-    return <Navigate to="/login" />;
-  }
+  useEffect(() => {
+    const fetchGames = async () => {
+      const { data, error } = await supabase.from("games").select("*");
+      const myGames = data?.filter((game: Game) =>
+        game.players.find((player: Player) => player.id === currentUser?.id),
+      );
+      setMyGames(myGames as Game[] | []);
+      console.log(myGames);
+    };
+    fetchGames();
+  }, []);
 
   return (
     <Layout>
@@ -122,6 +132,11 @@ const Home = () => {
               Join
             </button>
           </div>
+        </div>
+
+        <div className="col-span-2 mt-6">
+          <h3 className="text-3xl font-semibold mb-6">My Games</h3>
+          <GamesTable games={myGames} />
         </div>
       </div>
     </Layout>
