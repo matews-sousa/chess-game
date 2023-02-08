@@ -13,6 +13,7 @@ type EndOfGame =
   | "threefold repetition"
   | "fifty move rule"
   | "draw"
+  | "resignation"
   | null;
 
 type Game = {

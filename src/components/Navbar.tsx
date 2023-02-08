@@ -1,4 +1,4 @@
-import React from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 const Navbar = () => {
@@ -6,10 +6,14 @@ const Navbar = () => {
 
   return (
     <nav className="flex items-center justify-between px-24 py-4 border-b border-gray-400">
-      <h1 className="text-2xl font-bold">Chess.dev</h1>
+      <Link to="/" className="text-2xl font-bold">
+        Chess.dev
+      </Link>
 
       <ul className="flex items-center space-x-6">
-        <li>Home</li>
+        <li>
+          <Link to="/">Home</Link>
+        </li>
         <li>Play</li>
         <li>Profile</li>
         <li>

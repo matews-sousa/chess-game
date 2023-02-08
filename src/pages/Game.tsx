@@ -7,6 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useGame } from "../contexts/GameContext";
 import { supabase } from "../lib/supabase";
 import { MdContentCopy } from "react-icons/md";
+import { HiFlag } from "react-icons/hi";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PromotionList from "../components/PromotionList";
@@ -144,6 +145,31 @@ const Game = () => {
     setMessages((prev) => [...prev, newMessage]);
   };
 
+  const handleResign = async () => {
+    if (!uuid || !currentUser || !channel || gameData?.status === "finished") return;
+    const winner = playerColor === "white" ? "black" : "white";
+    const typeOfEnd: EndOfGame = "resignation";
+    setIsGameOver(true);
+    setWinner(winner);
+    setTypeOfEnd(typeOfEnd);
+    await supabase
+      .from("games")
+      .update({
+        status: "finished",
+        winner,
+        endOfGame: typeOfEnd,
+      })
+      .eq("uuid", uuid);
+    await channel.send({
+      type: "broadcast",
+      event: "make-move",
+      payload: {
+        winner,
+        typeOfEnd,
+      },
+    });
+  };
+
   useEffect(() => {
     if (!uuid || !currentUser) return;
     setUuid(uuid);
@@ -153,22 +179,24 @@ const Game = () => {
     if (!channel) return;
     channel.on("broadcast", { event: "make-move" }, async (payload) => {
       const { move, winner, typeOfEnd } = payload.payload;
-      chess.move(move);
+      if (typeOfEnd !== "resignation") chess.move(move);
       setWinner(winner);
-      setIsGameOver(chess.isGameOver());
+      typeOfEnd !== "resignation" ? setIsGameOver(chess.isGameOver()) : setIsGameOver(true);
       setTypeOfEnd(typeOfEnd);
       setPosition(chess.fen());
-      await supabase
-        .from("games")
-        .update({
-          position: chess.fen(),
-          status: chess.isGameOver() ? "finished" : "started",
-          winner,
-          endOfGame: typeOfEnd,
-        })
-        .eq("uuid", uuid)
-        .select()
-        .single();
+      if (typeOfEnd !== "resignation") {
+        await supabase
+          .from("games")
+          .update({
+            position: chess.fen(),
+            status: chess.isGameOver() ? "finished" : "started",
+            winner,
+            endOfGame: typeOfEnd,
+          })
+          .eq("uuid", uuid)
+          .select()
+          .single();
+      }
     });
 
     channel.on("broadcast", { event: "send-message" }, (payload) => {
@@ -243,7 +271,7 @@ const Game = () => {
                 onDrop={handleOnDrop}
                 orientation={playerColor}
               />
-              {isGameOver && (
+              {(isGameOver || gameData.status === "finished") && (
                 <div className="absolute inset-0 bg-black bg-opacity-75 z-50 flex flex-col items-center justify-center">
                   <div className="bg-white p-6 rounded-md flex flex-col items-center justify-center">
                     <h1 className="text-2xl font-bold mb-4">{winner === playerColor ? "You won!" : "You lost!"} </h1>
@@ -271,7 +299,16 @@ const Game = () => {
             )}
           </div>
           <div className="flex flex-col justify-between">
-            <div className="flex flex-col space-y-4">
+            <div>
+              <button
+                onClick={handleResign}
+                className="flex items-center gap-2 px-2 py-3 bg-red-400 hover:bg-red-500 font-semibold rounded-md text-white"
+              >
+                <span>Resign</span>
+                <HiFlag className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex flex-col space-y-4 overflow-y-auto">
               {messages.map((message, i) => (
                 <div
                   key={i}
