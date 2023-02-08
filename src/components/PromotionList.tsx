@@ -8,7 +8,7 @@ const PromotionList = ({ handleChoosePromotion, playerColor }: Props) => {
     <div className="absolute top-0 inset-x-0 z-50 flex items-center justify-between bg-amber-500 h-[70px] px-10">
       {options.map((option) => (
         <button key={option.label} className="flex items-center" onClick={() => handleChoosePromotion(option.value)}>
-          <img src={`/${playerColor[0]}_${option.value}.png`} alt="" />
+          <img src={`/${playerColor[0]}_${option.value}.svg`} alt="" />
         </button>
       ))}
     </div>

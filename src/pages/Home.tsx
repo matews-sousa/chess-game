@@ -98,14 +98,14 @@ const Home = () => {
               onClick={() => handleSelectColor("white")}
               className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex flex-col items-center justify-center"
             >
-              <img src="/w_k.png" alt="White King piece" />
+              <img src="/w_k.svg" alt="White King piece" />
               <span>White</span>
             </button>
             <button
               onClick={() => handleSelectColor("black")}
               className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex flex-col items-center justify-center"
             >
-              <img src="/b_k.png" alt="Black King piece" />
+              <img src="/b_k.svg" alt="Black King piece" />
               <span>Black</span>
             </button>
             <button
@@ -113,8 +113,8 @@ const Home = () => {
               className="bg-gray-200 hover:bg-gray-300 font-semibold py-10 rounded-md flex flex-col items-center justify-center"
             >
               <div className="flex gap-2">
-                <img src="/w_k.png" alt="White King piece" />
-                <img src="/b_k.png" alt="Black King piece" />
+                <img src="/w_k.svg" alt="White King piece" />
+                <img src="/b_k.svg" alt="Black King piece" />
               </div>
               <span>Random</span>
             </button>
