@@ -12,8 +12,7 @@ const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
 
 const Home = () => {
   const navigate = useNavigate();
-  const { currentUser, signOut } = useAuth();
-  console.log(currentUser);
+  const { currentUser } = useAuth();
   const [gameId, setGameId] = React.useState<string | null>(null);
 
   const handleSelectColor = async (color: string) => {

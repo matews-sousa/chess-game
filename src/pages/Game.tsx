@@ -10,6 +10,7 @@ import { MdContentCopy } from "react-icons/md";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PromotionList from "../components/PromotionList";
+import getTypeOfEnd from "../utils/getTypeOfEnd";
 
 // give chess initial position in fen notation
 const initialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -21,7 +22,9 @@ const Game = () => {
   const { currentUser } = useAuth();
   const { gameData, channel, whitePlayer, blackPlayer, setUuid } = useGame();
   const [position, setPosition] = useState<string>(initialFEN);
-  const [isGameOver, setIsGameOver] = useState(chess?.isGameOver());
+  const [isGameOver, setIsGameOver] = useState(false);
+  const [winner, setWinner] = useState<"white" | "black" | null>(null);
+  const [typeOfEnd, setTypeOfEnd] = useState<EndOfGame>(null);
   const [nextMoveIsPromotion, setNextMoveIsPromotion] = useState(false);
   const [promotionFromTo, setPromotionFromTo] = useState<{ from: Square; to: Square } | null>(null);
   const playerColor = gameData?.players.find((player) => player.id === currentUser?.id)?.color as "white" | "black";
@@ -60,6 +63,14 @@ const Game = () => {
       if (move === null) return;
       setPosition(chess.fen());
       setIsGameOver(chess.isGameOver());
+
+      if (chess.isGameOver()) {
+        const winner = chess.turn() === "w" ? "black" : "white";
+        const typeOfEnd = getTypeOfEnd(chess);
+        setWinner(winner);
+        setTypeOfEnd(typeOfEnd);
+      }
+
       await channel.send({
         type: "broadcast",
         event: "make-move",
@@ -68,6 +79,8 @@ const Game = () => {
             from: sourceSquare,
             to: targetSquare,
           },
+          winner: chess.isGameOver() ? (chess.turn() === "w" ? "black" : "white") : null,
+          typeOfEnd: chess.isGameOver() ? getTypeOfEnd(chess) : null,
         },
       });
     } catch (error) {
@@ -116,10 +129,23 @@ const Game = () => {
   useEffect(() => {
     if (!channel) return;
     channel.on("broadcast", { event: "make-move" }, async (payload) => {
-      const { move } = payload.payload;
+      const { move, winner, typeOfEnd } = payload.payload;
       chess.move(move);
+      setWinner(winner);
+      setIsGameOver(chess.isGameOver());
+      setTypeOfEnd(typeOfEnd);
       setPosition(chess.fen());
-      await supabase.from("games").update({ position: chess.fen() }).eq("uuid", uuid).select().single();
+      await supabase
+        .from("games")
+        .update({
+          position: chess.fen(),
+          status: chess.isGameOver() ? "finished" : "started",
+          winner,
+          endOfGame: typeOfEnd,
+        })
+        .eq("uuid", uuid)
+        .select()
+        .single();
     });
   }, [channel]);
 
@@ -188,6 +214,22 @@ const Game = () => {
               onDrop={handleOnDrop}
               orientation={playerColor}
             />
+            {isGameOver && (
+              <div className="absolute inset-0 bg-black bg-opacity-75 z-50 flex flex-col items-center justify-center">
+                <div className="bg-white p-6 rounded-md flex flex-col items-center justify-center">
+                  <h1 className="text-2xl font-bold mb-4">{winner === playerColor ? "You won!" : "You lost!"} </h1>
+                  <p className="mb-4 font-bold">{typeOfEnd?.toUpperCase()}</p>
+                  <button
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    onClick={async () => {
+                      navigate("/");
+                    }}
+                  >
+                    Back to home
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
           {playerColor === "white" ? (
             <div className="flex flex-col items-center">

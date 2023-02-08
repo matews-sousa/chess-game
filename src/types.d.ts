@@ -4,13 +4,24 @@ type Player = {
   name: string;
 };
 
+type GameStatus = "waiting" | "started" | "finished";
+
+type EndOfGame =
+  | "checkmate"
+  | "stalemate"
+  | "insufficient material"
+  | "threefold repetition"
+  | "fifty move rule"
+  | "draw"
+  | null;
+
 type Game = {
   uuid: string;
   created_at: Date;
   creator_id: string;
   players: Player[];
-  status?: "waiting" | "started" | "finished";
-  winner: Player | null;
+  status: GameStatus;
   position?: string;
-  turn: "w" | "b";
+  winner?: "white" | "black" | null;
+  endOfGame?: EndOfGame;
 };

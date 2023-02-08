@@ -1,6 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
-import { User } from "@supabase/supabase-js";
+import { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
+
+type User = SupabaseUser & {
+  user_metadata: {
+    firstName: string;
+  };
+};
 
 interface AuthContextProps {
   currentUser: User | null;
@@ -48,12 +54,12 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const {
         data: { user },
       } = userRes;
-      setCurrentUser(user ?? null);
+      setCurrentUser((user as User) ?? null);
       setLoading(false);
     });
 
     supabase.auth.onAuthStateChange((event, session) => {
-      setCurrentUser(session?.user ?? null);
+      setCurrentUser((session?.user as User) ?? null);
       setLoading(false);
     });
   }, []);
