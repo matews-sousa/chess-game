@@ -57,8 +57,9 @@ const Home = () => {
     const { data: updatedGame, error: updateError } = await supabase
       .from("games")
       .update({
+        status: "started",
         players: [
-          ...data.players,
+          data.players[0],
           {
             id: currentUser?.id,
             color: data.players[0].color === "white" ? "black" : "white",

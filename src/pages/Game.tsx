@@ -27,6 +27,7 @@ const Game = () => {
   const [messages, setMessages] = useState<Message[]>([]);
 
   const [position, setPosition] = useState<string>(initialFEN);
+  const [history, setHistory] = useState<string[]>([]);
   const [isGameOver, setIsGameOver] = useState(false);
   const [winner, setWinner] = useState<"white" | "black" | null>(null);
   const [typeOfEnd, setTypeOfEnd] = useState<EndOfGame>(null);
@@ -69,6 +70,8 @@ const Game = () => {
       if (move === null) return;
       setPosition(chess.fen());
       setIsGameOver(chess.isGameOver());
+      const newHistory = [...history, chess.history()[0]];
+      setHistory(newHistory);
 
       if (chess.isGameOver()) {
         const winner = chess.turn() === "w" ? "black" : "white";
@@ -87,6 +90,7 @@ const Game = () => {
           },
           winner: chess.isGameOver() ? (chess.turn() === "w" ? "black" : "white") : null,
           typeOfEnd: chess.isGameOver() ? getTypeOfEnd(chess) : null,
+          newHistory,
         },
       });
     } catch (error) {
@@ -106,6 +110,8 @@ const Game = () => {
       if (move === null) return;
       setPosition(chess.fen());
       setIsGameOver(chess.isGameOver());
+      const newHistory = [...history, chess.history()[0]];
+      setHistory(newHistory);
       await channel.send({
         type: "broadcast",
         event: "make-move",
@@ -115,6 +121,7 @@ const Game = () => {
             to: promotionFromTo.to,
             promotion: promotionValue,
           },
+          newHistory,
         },
       });
       setNextMoveIsPromotion(false);
@@ -178,12 +185,14 @@ const Game = () => {
   useEffect(() => {
     if (!channel) return;
     channel.on("broadcast", { event: "make-move" }, async (payload) => {
-      const { move, winner, typeOfEnd } = payload.payload;
+      const { move, winner, typeOfEnd, newHistory } = payload.payload;
       if (typeOfEnd !== "resignation") chess.move(move);
       setWinner(winner);
       typeOfEnd !== "resignation" ? setIsGameOver(chess.isGameOver()) : setIsGameOver(true);
       setTypeOfEnd(typeOfEnd);
       setPosition(chess.fen());
+      setHistory(newHistory);
+
       if (typeOfEnd !== "resignation") {
         await supabase
           .from("games")
@@ -192,6 +201,7 @@ const Game = () => {
             status: chess.isGameOver() ? "finished" : "started",
             winner,
             endOfGame: typeOfEnd,
+            history: newHistory,
           })
           .eq("uuid", uuid)
           .select()
@@ -213,9 +223,9 @@ const Game = () => {
     }
   }, [gameData]);
 
-  if (!gameData) return null;
+  if (!gameData || !uuid || !channel) return null;
 
-  if (gameData.players.length === 1 && gameData.creator_id === currentUser?.id && uuid) {
+  if (gameData.status === "waiting" && gameData.creator_id === currentUser?.id) {
     return (
       <Layout>
         <ToastContainer />
@@ -232,17 +242,16 @@ const Game = () => {
             </div>
           </div>
           <h1 className="text-2xl font-bold">Waiting for another player...</h1>
-          {gameData.creator_id === currentUser?.id && (
-            <button
-              className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
-              onClick={async () => {
-                await supabase.from("games").delete().eq("uuid", uuid);
-                navigate("/");
-              }}
-            >
-              Cancel
-            </button>
-          )}
+
+          <button
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4"
+            onClick={async () => {
+              await supabase.from("games").delete().eq("uuid", uuid);
+              navigate("/");
+            }}
+          >
+            Cancel
+          </button>
         </div>
       </Layout>
     );

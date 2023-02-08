@@ -21,6 +21,9 @@ const GamesTable = ({ games }: Props) => {
           <th className="text-left px-6 py-3" scope="col">
             Date
           </th>
+          <th className="text-left px-6 py-3" scope="col">
+            Moves
+          </th>
         </tr>
       </thead>
       <tbody className="">
@@ -71,6 +74,7 @@ const GamesTable = ({ games }: Props) => {
                   day: "numeric",
                 })}
               </td>
+              <td className="px-6 py-4">{game.history?.length}</td>
             </tr>
           );
         })}

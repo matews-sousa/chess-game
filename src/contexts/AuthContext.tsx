@@ -23,7 +23,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   const signUp = async (email: string, password: string, firstName: string) => {
-    const { data, error } = await supabase.auth.signUp({
+    await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -32,20 +32,17 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         },
       },
     });
-    console.log(data, error);
   };
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
+    await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    console.log(data, error);
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    console.log(error);
+    await supabase.auth.signOut();
   };
 
   useEffect(() => {

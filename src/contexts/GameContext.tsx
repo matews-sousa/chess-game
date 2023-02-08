@@ -1,5 +1,4 @@
 import { RealtimeChannel } from "@supabase/supabase-js";
-import { Chess } from "chess.js";
 import { useContext, createContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "./AuthContext";
