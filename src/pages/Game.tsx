@@ -129,7 +129,6 @@ const Game = () => {
   const handleSendMessage = async (message: string) => {
     if (!uuid || !currentUser || !channel || !message) return;
     const newMessage = {
-      game_id: uuid,
       player_id: currentUser.id,
       from: currentUser.user_metadata.firstName || currentUser.email,
       text: message,
@@ -273,9 +272,9 @@ const Game = () => {
           </div>
           <div className="flex flex-col justify-between">
             <div className="flex flex-col space-y-4">
-              {messages.map((message) => (
+              {messages.map((message, i) => (
                 <div
-                  key={message.id}
+                  key={i}
                   className={`flex flex-col items-start p-2 bg-gray-200 rounded-md max-w-xs w-full ${
                     message.player_id === currentUser?.id ? "self-end" : "self-start"
                   }`}
