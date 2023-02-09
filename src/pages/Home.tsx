@@ -87,12 +87,12 @@ const Home = () => {
 
   return (
     <Layout>
-      <h2 className="text-4xl font-bold mb-10">
+      <h2 className="text-3xl md:text-4xl font-bold mb-10">
         Welcome, <span className="underline">{currentUser?.user_metadata.firstName || currentUser?.email}</span>
       </h2>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="col-span-3 lg:col-span-2">
           <h3 className="text-3xl font-semibold mb-6">Create Game</h3>
           <div className="grid grid-cols-3 gap-4">
             <button
@@ -122,7 +122,7 @@ const Home = () => {
           </div>
         </div>
 
-        <div className="col-span-1">
+        <div className="col-span-3 lg:col-span-1">
           <h3 className="text-3xl font-semibold mb-6">Join Game</h3>
           <div className="flex flex-col">
             <input

@@ -5,7 +5,7 @@ const Navbar = () => {
   const { signOut } = useAuth();
 
   return (
-    <nav className="flex items-center justify-between px-24 py-4 border-b border-gray-400">
+    <nav className="flex items-center justify-between px-6 md:px-24 py-4 border-b border-gray-400">
       <Link to="/" className="text-2xl font-bold">
         Chess.dev
       </Link>
@@ -14,8 +14,6 @@ const Navbar = () => {
         <li>
           <Link to="/">Home</Link>
         </li>
-        <li>Play</li>
-        <li>Profile</li>
         <li>
           <button className="p-2 rounded-md bg-red-400 text-white font-semibold" onClick={signOut}>
             Sign Out
