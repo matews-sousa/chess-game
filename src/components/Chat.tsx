@@ -44,7 +44,7 @@ const Chat = ({ channel }: Props) => {
           {messages.map((message, i) => (
             <div
               key={i}
-              className={`flex flex-col items-start p-2 bg-gray-200 rounded-md w-52 w-full ${
+              className={`flex flex-col items-start p-2 bg-gray-200 rounded-md w-52 ${
                 message.player_id === currentUser?.id ? "self-end" : "self-start"
               }`}
             >
