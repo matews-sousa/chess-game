@@ -256,7 +256,7 @@ const Game = () => {
                 draggable={!isGameOver}
                 onDrop={handleOnDrop}
                 orientation={playerColor}
-                calcWidth={({ screenWidth }) => (screenWidth < 768 ? screenWidth / 2 : screenWidth / 3)}
+                calcWidth={({ screenWidth }) => (screenWidth < 768 ? screenWidth - 60 : screenWidth / 2.7)}
               />
               {(isGameOver || gameData.status === "finished") && (
                 <div className="absolute inset-0 bg-black bg-opacity-75 z-50 flex flex-col items-center justify-center">
