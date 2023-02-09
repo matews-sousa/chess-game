@@ -51,32 +51,25 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
           if (gameData?.players.length === 1 && gameData?.players[0].id !== currentUser?.id) {
-            await channel.send({
-              type: "broadcast",
-              event: "join-game",
-              payload: {
-                id: currentUser.id,
-                color: gameData?.players[0].color === "white" ? "black" : "white",
-                name: currentUser.user_metadata.firstName || currentUser.email,
-              },
-            });
+            await supabase
+              .from("games")
+              .update({
+                status: "started",
+                players: [
+                  gameData.players[0],
+                  {
+                    id: currentUser.id,
+                    color: gameData.players[0].color === "white" ? "black" : "white",
+                    name: currentUser.user_metadata.firstName || currentUser.email,
+                  },
+                ],
+              })
+              .eq("uuid", uuid)
+              .select()
+              .single();
           }
         }
       });
-
-    channel.on("broadcast", { event: "join-game" }, async (payload) => {
-      const { data, error } = await supabase.from("games").select("*").eq("uuid", uuid).single();
-      if (error) return;
-
-      if (data.players.length === 1) {
-        await supabase
-          .from("games")
-          .update({ players: [data.players[0], payload.payload] })
-          .eq("uuid", uuid)
-          .select()
-          .single();
-      }
-    });
 
     setChannel(channel);
 
