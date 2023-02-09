@@ -12,6 +12,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import PromotionList from "../components/PromotionList";
 import getTypeOfEnd from "../utils/getTypeOfEnd";
+import Chat from "../components/Chat";
 
 // give chess initial position in fen notation
 const initialFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -22,9 +23,6 @@ const Game = () => {
   const { uuid } = useParams<{ uuid: string }>();
   const { currentUser } = useAuth();
   const { gameData, channel, whitePlayer, blackPlayer, setUuid } = useGame();
-
-  const [messageText, setMessageText] = useState<string>("");
-  const [messages, setMessages] = useState<Message[]>([]);
 
   const [position, setPosition] = useState<string>(initialFEN);
   const [history, setHistory] = useState<string[]>([]);
@@ -134,24 +132,6 @@ const Game = () => {
   // allow to move only if the player is owner of the piece (playerColor === pieceColor)
   const handleAllowDrag = ({ piece }: { piece: string }) => piece[0] === playerColor[0];
 
-  const handleSendMessage = async (message: string) => {
-    if (!uuid || !currentUser || !channel || !message) return;
-    const newMessage = {
-      player_id: currentUser.id,
-      from: currentUser.user_metadata.firstName || currentUser.email,
-      text: message,
-    } as Message;
-    await channel.send({
-      type: "broadcast",
-      event: "send-message",
-      payload: {
-        message: newMessage,
-      },
-    });
-    setMessageText("");
-    setMessages((prev) => [...prev, newMessage]);
-  };
-
   const handleResign = async () => {
     if (!uuid || !currentUser || !channel || gameData?.status === "finished") return;
     const winner = playerColor === "white" ? "black" : "white";
@@ -207,11 +187,6 @@ const Game = () => {
           .select()
           .single();
       }
-    });
-
-    channel.on("broadcast", { event: "send-message" }, (payload) => {
-      const { message } = payload.payload;
-      setMessages((prev) => [...prev, message as Message]);
     });
   }, [channel]);
 
@@ -310,7 +285,8 @@ const Game = () => {
               </div>
             )}
           </div>
-          <div className="flex flex-col justify-between">
+
+          <div className="flex flex-col justify-between space-y-4 rounded-md h-[80vh]">
             <div>
               <button
                 onClick={handleResign}
@@ -320,36 +296,7 @@ const Game = () => {
                 <HiFlag className="h-5 w-5" />
               </button>
             </div>
-            <div className="flex flex-col space-y-4 overflow-y-auto">
-              {messages.map((message, i) => (
-                <div
-                  key={i}
-                  className={`flex flex-col items-start p-2 bg-gray-200 rounded-md max-w-xs w-full ${
-                    message.player_id === currentUser?.id ? "self-end" : "self-start"
-                  }`}
-                >
-                  <p className="font-bold">{message.player_id === currentUser?.id ? "You" : message.from}</p>
-                  <p>{message.text}</p>
-                </div>
-              ))}
-            </div>
-            <form
-              className="flex"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                handleSendMessage(messageText);
-              }}
-            >
-              <input
-                className="flex-1 px-2 py-3 bg-gray-200 rounded-l-md"
-                type="text"
-                onChange={(e) => setMessageText(e.target.value)}
-                value={messageText}
-              />
-              <button type="submit" className="px-2 py-3 bg-blue-400 rounded-r-md font-semibold text-white">
-                Send
-              </button>
-            </form>
+            <Chat channel={channel} />
           </div>
         </div>
       )}

@@ -57,6 +57,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
               payload: {
                 id: currentUser.id,
                 color: gameData?.players[0].color === "white" ? "black" : "white",
+                name: currentUser.user_metadata.firstName || currentUser.email,
               },
             });
           }
@@ -78,6 +79,10 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     setChannel(channel);
+
+    return () => {
+      channel.unsubscribe();
+    };
   }, [uuid]);
 
   const value = {
