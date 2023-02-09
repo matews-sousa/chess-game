@@ -9,7 +9,7 @@ const GamesTable = ({ games }: Props) => {
   const { currentUser } = useAuth();
 
   return (
-    <table className="w-full text-sm text-left">
+    <table className="w-full text-sm text-left overflow-x-scroll table-auto block">
       <thead className="text-xs uppercase bg-gray-50 ">
         <tr className="">
           <th className="text-left px-6 py-3" scope="col">
@@ -59,11 +59,11 @@ const GamesTable = ({ games }: Props) => {
                 </div>
                 <div>
                   {game.winner === null ? (
-                    <span className="text-gray-700 font-semibold p-2 bg-gray-200 rounded-md">Draw</span>
+                    <span className="text-gray-700 font-semibold rounded-md">Draw</span>
                   ) : currentUserPlayer?.color === game.winner ? (
-                    <span className="text-green-500 font-semibold p-2 bg-gray-200 rounded-md">You won!</span>
+                    <span className="text-green-500 font-semibold rounded-md">You won!</span>
                   ) : (
-                    <span className="text-red-500 font-semibold p-2 bg-gray-200 rounded-md">You lost!</span>
+                    <span className="text-red-500 font-semibold rounded-md">You lost!</span>
                   )}
                 </div>
               </td>

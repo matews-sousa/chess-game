@@ -142,6 +142,7 @@ const Home = () => {
 
         <div className="col-span-2 mt-6">
           <h3 className="text-3xl font-semibold mb-6">My Games</h3>
+
           <GamesTable games={myGames} />
         </div>
       </div>
