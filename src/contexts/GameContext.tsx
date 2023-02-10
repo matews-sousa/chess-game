@@ -51,7 +51,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
       .subscribe(async (status) => {
         if (status === "SUBSCRIBED") {
           if (gameData?.players.length === 1 && gameData?.players[0].id !== currentUser?.id) {
-            await supabase
+            const { data } = await supabase
               .from("games")
               .update({
                 status: "started",
@@ -67,6 +67,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
               .eq("uuid", uuid)
               .select()
               .single();
+            setGameData(data as Game);
           }
         }
       });
