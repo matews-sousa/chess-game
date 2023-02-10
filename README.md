@@ -24,6 +24,7 @@ Use the project at https://chess-game-wine.vercel.app
 - [Supabase](https://supabase.com) as BaaS (Backend as a Service)
 - [Tailwind CSS](https://tailwindcss.com) for styling
 - [Chess.js](https://github.com/jhlywa/chess.js) for validating piece movement and a game state
+- [Chessboard.jsx](https://chessboardjsx.com) for displaying a Chessboard with pieces
 
 ## Run Locally
 
