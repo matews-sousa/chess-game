@@ -24,6 +24,8 @@ const Game = () => {
   const { currentUser } = useAuth();
   const { gameData, channel, whitePlayer, blackPlayer, setUuid } = useGame();
 
+  const [newGameUuid, setNewGameUuid] = useState<string | null>(null);
+
   const [position, setPosition] = useState<string>(initialFEN);
   const [history, setHistory] = useState<string[]>([]);
   const [isGameOver, setIsGameOver] = useState(false);
@@ -33,6 +35,17 @@ const Game = () => {
   const [promotionFromTo, setPromotionFromTo] = useState<{ from: Square; to: Square } | null>(null);
 
   const playerColor = gameData?.players.find((player) => player.id === currentUser?.id)?.color as "white" | "black";
+
+  const resetLocalGameState = () => {
+    setPosition(initialFEN);
+    setHistory([]);
+    setIsGameOver(false);
+    setWinner(null);
+    setTypeOfEnd(null);
+    setNextMoveIsPromotion(false);
+    setPromotionFromTo(null);
+    setNewGameUuid(null);
+  };
 
   const copyToClipboard = () => {
     if (!uuid) return;
@@ -157,6 +170,42 @@ const Game = () => {
     });
   };
 
+  const handlePlayAgain = async () => {
+    if (!channel || !currentUser || gameData?.status !== "finished") return;
+
+    const { data, error } = await supabase
+      .from("games")
+      .insert({
+        creator_id: currentUser.id,
+        players: [
+          {
+            id: currentUser.id,
+            color: playerColor === "black" ? "white" : "black",
+            name: currentUser.user_metadata.firstName || currentUser.email,
+          },
+          {
+            id: gameData.players[1].id,
+            color: playerColor,
+            name: gameData.players[1].name,
+          },
+        ],
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.log(error);
+      return;
+    }
+    await channel.send({
+      type: "broadcast",
+      event: "invite-play-again",
+      payload: {
+        newGameUuid: data.uuid,
+      },
+    });
+  };
+
   useEffect(() => {
     if (!uuid || !currentUser) return;
     setUuid(uuid);
@@ -187,6 +236,18 @@ const Game = () => {
           .select()
           .single();
       }
+    });
+
+    channel.on("broadcast", { event: "invite-play-again" }, async (payload) => {
+      const { newGameUuid } = payload.payload;
+      setNewGameUuid(newGameUuid);
+    });
+
+    channel.on("broadcast", { event: "accept-invite" }, async (payload) => {
+      const { newGameUuid } = payload.payload;
+      await supabase.from("games").update({ status: "started" }).eq("uuid", newGameUuid);
+      resetLocalGameState();
+      navigate(`/${newGameUuid}`);
     });
   }, [channel]);
 
@@ -263,14 +324,42 @@ const Game = () => {
                   <div className="bg-white p-6 rounded-md flex flex-col items-center justify-center">
                     <h1 className="text-2xl font-bold mb-4">{winner === playerColor ? "You won!" : "You lost!"} </h1>
                     <p className="mb-4 font-bold">{typeOfEnd?.toUpperCase()}</p>
-                    <button
-                      className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                      onClick={async () => {
-                        navigate("/");
-                      }}
-                    >
-                      Back to home
-                    </button>
+                    <div className="flex gap-2 items-center">
+                      <button
+                        className="hover:bg-gray-200 text-black font-bold py-2 px-4 rounded"
+                        onClick={async () => {
+                          navigate("/");
+                        }}
+                      >
+                        Back to home
+                      </button>
+
+                      {!newGameUuid ? (
+                        <button
+                          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                          onClick={handlePlayAgain}
+                        >
+                          Play Again
+                        </button>
+                      ) : (
+                        <button
+                          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                          onClick={async () => {
+                            await channel.send({
+                              type: "broadcast",
+                              event: "accept-invite",
+                              payload: {
+                                newGameUuid,
+                              },
+                            });
+                            resetLocalGameState();
+                            navigate(`/${newGameUuid}`);
+                          }}
+                        >
+                          Accept Rematch
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
