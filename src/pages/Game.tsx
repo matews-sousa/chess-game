@@ -65,8 +65,12 @@ const Game = () => {
   const handleOnDrop = async ({ sourceSquare, targetSquare }: { sourceSquare: Square; targetSquare: Square }) => {
     if (sourceSquare === targetSquare || !channel) return;
 
+    // get the possible moves and check if the next move is a promotion
+    const moves = chess.moves({ verbose: true, square: sourceSquare });
+    const isValidAndPromotion = moves.some((move) => move.to === targetSquare && move.promotion);
+
     // if the next move is a promotion, we need to wait for the user to choose a piece
-    if ((targetSquare[1] === "8" || targetSquare[1] === "1") && chess.get(sourceSquare)?.type === "p") {
+    if (isValidAndPromotion && chess.get(sourceSquare)?.type === "p") {
       setNextMoveIsPromotion(true);
       setPromotionFromTo({ from: sourceSquare, to: targetSquare });
       return;
