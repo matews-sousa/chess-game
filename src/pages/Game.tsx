@@ -261,7 +261,7 @@ const Game = () => {
 
   if (!gameData || !uuid || !channel) return null;
 
-  if (gameData.status === "waiting" && gameData.creator_id === currentUser?.id) {
+  if (gameData.status === "waiting") {
     return (
       <Layout>
         <ToastContainer />

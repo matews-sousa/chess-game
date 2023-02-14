@@ -49,28 +49,39 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     channel
       .on("presence", { event: "join" }, async () => {})
       .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          if (gameData?.players.length === 1 && gameData?.players[0].id !== currentUser?.id) {
-            const { data } = await supabase
-              .from("games")
-              .update({
-                status: "started",
-                players: [
-                  gameData.players[0],
-                  {
-                    id: currentUser.id,
-                    color: gameData.players[0].color === "white" ? "black" : "white",
-                    name: currentUser.user_metadata.firstName || currentUser.email,
-                  },
-                ],
-              })
-              .eq("uuid", uuid)
-              .select()
-              .single();
-            setGameData(data as Game);
-          }
+        if (status === "SUBSCRIBED" && gameData?.players.length === 1 && gameData?.players[0].id !== currentUser?.id) {
+          const { data } = await supabase
+            .from("games")
+            .update({
+              status: "started",
+              players: [
+                gameData.players[0],
+                {
+                  id: currentUser.id,
+                  color: gameData?.players[0].color === "white" ? "black" : "white",
+                  name: currentUser.user_metadata.firstName || currentUser.email,
+                },
+              ],
+            })
+            .eq("uuid", uuid)
+            .select()
+            .single();
+          setGameData(data as Game);
+
+          channel.send({
+            type: "broadcast",
+            event: "join-game",
+            payload: {
+              data,
+            },
+          });
         }
       });
+
+    channel.on("broadcast", { event: "join-game" }, async (payload) => {
+      const { data } = payload.payload;
+      setGameData(data as Game);
+    });
 
     setChannel(channel);
 
