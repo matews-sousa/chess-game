@@ -128,7 +128,7 @@ const Game = () => {
               {promotionFromTo && (
                 <PromotionList handleChoosePromotion={handleChoosePromotion} playerColor={currentPlayerColor} />
               )}
-              <Board handleOnDrop={handleOnDrop} />
+              <Board handleOnDrop={handleOnDrop} chess={chess} />
               {gameData.status === "finished" && <Results />}
             </div>
             {currentPlayerColor === "white" ? (

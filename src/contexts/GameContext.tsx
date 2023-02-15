@@ -43,7 +43,6 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "games", filter: `uuid=eq.${uuid}` },
         (payload) => {
-          console.log(payload);
           setGameData(payload.new as Game);
         },
       )

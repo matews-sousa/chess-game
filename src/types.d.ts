@@ -25,7 +25,10 @@ type Game = {
   position: string;
   winner: "white" | "black" | null;
   endOfGame?: EndOfGame;
-  history: string[];
+  history: {
+    from: string;
+    to: string;
+  }[];
 };
 
 type Message = {
