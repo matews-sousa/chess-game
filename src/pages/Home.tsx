@@ -22,6 +22,7 @@ const Home = () => {
       .from("games")
       .insert({
         creator_id: currentUser?.id,
+        history: [],
         players: [
           {
             id: currentUser?.id,

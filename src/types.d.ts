@@ -22,10 +22,10 @@ type Game = {
   creator_id: string;
   players: Player[];
   status: GameStatus;
-  position?: string;
-  winner?: "white" | "black" | null;
+  position: string;
+  winner: "white" | "black" | null;
   endOfGame?: EndOfGame;
-  history?: string[];
+  history: string[];
 };
 
 type Message = {

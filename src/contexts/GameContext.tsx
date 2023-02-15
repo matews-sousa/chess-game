@@ -6,6 +6,7 @@ import { useAuth } from "./AuthContext";
 interface GameContextProps {
   gameData: Game | null;
   channel: RealtimeChannel | null;
+  currentPlayerColor: "white" | "black";
   whitePlayer: Player | undefined;
   blackPlayer: Player | undefined;
   setUuid: React.Dispatch<React.SetStateAction<string | null>>;
@@ -19,6 +20,9 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
   const [uuid, setUuid] = useState<string | null>(null);
   const [gameData, setGameData] = useState<Game | null>(null);
   const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+  const currentPlayerColor = gameData?.players.find((player) => player.id === currentUser?.id)?.color as
+    | "black"
+    | "white";
   const whitePlayer = gameData?.players.find((player) => player.color === "white");
   const blackPlayer = gameData?.players.find((player) => player.color === "black");
 
@@ -39,6 +43,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "games", filter: `uuid=eq.${uuid}` },
         (payload) => {
+          console.log(payload);
           setGameData(payload.new as Game);
         },
       )
@@ -92,6 +97,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 
   const value = {
     gameData,
+    currentPlayerColor,
     whitePlayer,
     blackPlayer,
     channel,
