@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import GamesTable from "../components/GamesTable";
 import Layout from "../components/Layout";
 import { useAuth } from "../contexts/AuthContext";
+import { useGame } from "../contexts/GameContext";
 import { supabase } from "../lib/supabase";
 
 // random color
@@ -14,6 +15,7 @@ const getRandomColor = () => colors[Math.floor(Math.random() * colors.length)];
 const Home = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { setGameData } = useGame();
   const [gameId, setGameId] = useState<string | null>(null);
   const [myGames, setMyGames] = useState<Game[]>([]);
 
@@ -71,6 +73,7 @@ const Home = () => {
       .eq("uuid", gameId)
       .select()
       .single();
+    setGameData(updatedGame);
     // navigate to the game page
     navigate(`/${updatedGame.uuid}`);
   };
